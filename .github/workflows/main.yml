@@ -14,7 +14,7 @@ on:
       PROJECT_ID:
         description: 'Branch name will be feature-(below entered text) '     
         required: true
-        default: 'My First Project'
+        default: 'banded-lexicon-360413'
       IMAGE_NAME:
         description: 'image iname  '     
         required: true
