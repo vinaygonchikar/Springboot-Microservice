@@ -16,15 +16,15 @@ on:
         required: true
         default: 'My First Project'
       IMAGE_NAME:
-        description: 'Branch name will be feature-(below entered text) '     
+        description: 'image iname  '     
         required: true
         default: ''
       POM_FILE_PATH:
-        description: 'Branch name will be feature-(below entered text) '     
+        description: 'pom file path '     
         required: true
         default: ''
       DOCKER_FILE_PATH:
-        description: 'Branch name will be feature-(below entered text) '     
+        description: 'docker file path '     
         required: true
         default: '' 
 
