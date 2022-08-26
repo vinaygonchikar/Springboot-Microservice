@@ -1,0 +1,97 @@
+name: Development-CI
+#below are input required when using this action
+on:
+  workflow_dispatch:
+    inputs:
+      JAVA_VERSION:
+        description: 'Branch name will be feature-(below entered text) '     
+        required: true
+        default: '11'
+      HOSTNAME:
+        description: 'Branch name will be feature-(below entered text) '     
+        required: true
+        default: 'asia.gcr.io'
+      PROJECT_ID:
+        description: 'Branch name will be feature-(below entered text) '     
+        required: true
+        default: 'My First Project'
+      IMAGE_NAME:
+        description: 'Branch name will be feature-(below entered text) '     
+        required: true
+        default: ''
+      POM_FILE_PATH:
+        description: 'Branch name will be feature-(below entered text) '     
+        required: true
+        default: ''
+      DOCKER_FILE_PATH:
+        description: 'Branch name will be feature-(below entered text) '     
+        required: true
+        default: '' 
+
+jobs:
+ Development-CI:
+    runs-on: ubuntu-latest
+    steps:    
+# checkout to branch
+      - name: Checking out...
+        uses: actions/checkout@v2
+       
+      - name: Who started this workflow
+        run: echo "This workflow is started by ${{ github.actor }}" 
+
+#Environment variables
+      - name: Set GitHub_Env value
+        run: |
+          echo "TAG_NAME=$(echo "${{ github.ref_name }}" | sed 's/\//\-/g')" >> $GITHUB_ENV
+
+      - name: Display GitHub_Env values
+        run: |
+          echo "The java version is  ${{ inputs.JAVA_VERSION }}" 
+          echo "The hostname is ${{ inputs.HOSTNAME }}"
+          echo "The Project id is ${{ inputs.PROJECT_ID }}" 
+          echo "The image name is ${{ inputs.IMAGE_NAME }}" 
+          echo "The tagname for image is ${{ env.TAG_NAME }}"  
+          
+# install java in VM
+      
+      - name: Set up JDK ${{ inputs.JAVA_VERSION }}
+        uses: actions/setup-java@v2
+        with:
+          java-version: '${{ inputs.JAVA_VERSION }}'
+          distribution: 'adopt'        
+# Build with Maven
+  
+      - name: Build with Maven
+        run: |
+          cd ${{ inputs.POM_FILE_PATH }}
+          mvn clean install          
+        
+#Authentication to GCR
+        
+      - uses: google-github-actions/setup-gcloud@v0
+        with:
+          service_account_key: ${{ secrets.SERVICE_ACCOUNT_KEY }}
+          project_id: ${{ inputs.PROJECT_ID }}
+          export_default_credentials: true          
+# change path & build docker image
+          
+      - name: Build Docker Image
+        run: |
+          cd ${{ inputs.DOCKER_FILE_PATH }}
+          docker build -t ${{ inputs.HOSTNAME }}/${{ inputs.PROJECT_ID }}/${{ inputs.IMAGE_NAME }}:${{ env.TAG_NAME }} .        
+#configure docker use Google cloud while pushing image
+
+      - name: Configure Docker Client
+        run: |-
+          gcloud auth configure-docker --quiet
+          gcloud auth configure-docker ${{ inputs.PROJECT_ID }} --quiet
+          
+      - name: Docker Image
+        run: |
+          docker images     
+
+      - name: Docker Image to Container Registry (GCR)
+        run: |
+          docker push ${{ inputs.HOSTNAME }}/${{ inputs.PROJECT_ID }}/${{ inputs.IMAGE_NAME }}:${{ env.TAG_NAME }}
+
+
